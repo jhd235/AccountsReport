@@ -7,15 +7,37 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Data.SqlClient;
+using System.Net.Mail;
+using System.Timers;
+using System.IO;
 namespace WindowsFormsApplication1
 {
     public partial class Form1 : Form
     {
         DataTable dt = new DataTable();
+        WebBrowser webbrowser = new WebBrowser();
+        string[] lines = System.IO.File.ReadAllLines(@"conf.txt");
         public Form1()
         {
             InitializeComponent();
             this.Text = "Баланс"; 
+        }
+        //This is a scheduler
+        public static void Scheduler()
+        {
+        System.Timers.Timer aTimer = new System.Timers.Timer();
+        aTimer.Elapsed+=new ElapsedEventHandler(OnTimedEvent);
+        aTimer.Interval=5000;
+        aTimer.Enabled=true;
+
+        Console.WriteLine("Press \'q\' to quit the sample.");
+        while(Console.Read()!='q');
+}
+    
+ // Specify what you want to happen when the Elapsed event is raised.
+        private static void OnTimedEvent(object source, ElapsedEventArgs e)
+        {
+            MessageBox.Show("Hello World!");
         }
         public static string ConvertDataTableToHTML(DataTable dt)
         {
@@ -53,31 +75,34 @@ namespace WindowsFormsApplication1
             return html;
         }
 
-        private void webBrowser1_DocumentCompleted(object sender, WebBrowserDocumentCompletedEventArgs e)
-        {
-
-        }
-
-        private void button2_Click(object sender, EventArgs e)
+        private void report()
         {
             var myForm = new Form();
+            //var topPanel = new Panel();
+            //topPanel.Size = new Size(10,10); 
+            //topPanel.Dock = DockStyle.Top;
+            //myForm.Controls.Add(topPanel);
+            //var Menu = new MenuStrip();
+            //Menu.Items.Add("СохранитьHTML");
+            //myForm.Controls.Add(Menu);
+            /*var item = new System.Windows.Forms.ToolStripMenuItem()
+            {
+                Name = "Test",
+                Text = "Test"
+            };
             
             
-            var webbrowser = new WebBrowser();
+            Menu.Items.Add(item);
+            var btnSaveHTML = new Button();
+            btnSaveHTML.Name = "HTML";
+            btnSaveHTML.Text = "HTML";
+            myForm.Controls.Add(btnSaveHTML);*/
             myForm.Controls.Add(webbrowser);
-            webbrowser.Dock = DockStyle.Fill;
+            webbrowser.Dock = DockStyle.Top;
             string connetionString = null;
             SqlConnection connection;
             string sql = null;
-            string[] lines = System.IO.File.ReadAllLines(@"conf.txt");
-            foreach (string line in lines)
-            {
-                // Use a tab to indent each line of the file.
-                //Console.WriteLine("\t" + line);
-            //    var result = MessageBox.Show(lines[0]);
-
-            }
-
+            
            //connetionString = "Data Source=USERPC\\SQLEXPRESS;Initial Catalog=GameClass;User ID=manager;Password=zxc";
             connetionString = "Data Source=" + lines[0] + ";Initial Catalog=GameClass;User ID=" + lines[1] + ";Password=" + lines[2] + "";
             //var resultt = MessageBox.Show(connetionString);
@@ -94,7 +119,15 @@ namespace WindowsFormsApplication1
             //var res = MessageBox.Show(dt.Rows[0][1].ToString()); 
             //var res = MessageBox.Show(dt.Columns[0].ColumnName);
             myForm.Show();
+            var sfDialog = new SaveFileDialog();
+            sfDialog.Filter = "HTML Files | *.html";
+            sfDialog.DefaultExt = "html";
+            //File.WriteAllText(@"file.html", ConvertDataTableToHTML(dt), Encoding.Unicode); 
+            sfDialog.ShowDialog();
+            File.WriteAllText(sfDialog.FileName, ConvertDataTableToHTML(dt), Encoding.Unicode); 
             myForm.WindowState = FormWindowState.Maximized;
+
+            
 
         }
 
@@ -129,7 +162,44 @@ namespace WindowsFormsApplication1
         {
             dt_extract();
         }
-    }
+
+        private void наПочтуToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string your_id = "gameclass.infinity@gmail.com";
+            string your_password = "X@[MHb_uB#3mekk*";
+            try
+            {
+                SmtpClient client = new SmtpClient
+                {
+                    Host = "smtp.gmail.com",
+                    Port = 587,
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    Credentials = new System.Net.NetworkCredential(your_id, your_password),
+                    Timeout = 10000,
+                };
+                //MailMessage mm = new MailMessage(your_id, "gameclass.infinity@gmail.com", "subject", "body");
+                MailMessage mm = new MailMessage(your_id, "gameclass.infinity@gmail.com", "subject", ConvertDataTableToHTML(dt));
+                mm.IsBodyHtml = true;
+                client.Send(mm);
+                //Console.WriteLine("Email Sent");
+            }
+            catch (Exception error)
+            {
+                //Console.WriteLine("Could not end email\n\n" + error.ToString());
+            }
+        }
+
+        
+
+        private void accountsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            report();
+            
+        }
+
+        
+}
 }
             
        
